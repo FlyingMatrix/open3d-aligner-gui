@@ -246,8 +246,7 @@ class PointCloudApp:
         o3d.visualization.draw_geometries([source_copy, target_copy],
                                           window_name="Preprocessed Source (Yellow) & Target (Blue)",
                                           width=1200, height=900)
-        
-        
+              
         
     def view_aligned_point_clouds(self):
         if self.source is None or self.target is None:
@@ -489,12 +488,8 @@ class PointCloudApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    # Set window size: width x height
     root.geometry("600x800")  
-    # Prevent resizing (width, height)
     root.resizable(False, False)
-
     app = PointCloudApp(root)
     root.mainloop()
-
 
