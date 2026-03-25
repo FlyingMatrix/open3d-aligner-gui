@@ -39,12 +39,14 @@ class PointCloudApp:
     
     def __init__(self, root):
         self.root = root
-        self.root.title("Point Cloud Registration ToolKit")
+        self.root.title("open3d-aligner-gui")
         self.root.resizable(False, False)  # Prevent window resizing
 
         self.transformation = None
         self.source = None
         self.target = None
+        self.source_sampled = None
+        self.target_sampled = None
 
         # === File I/O Frame ===
         file_frame = tk.LabelFrame(root, text="Load Point Cloud Files", padx=10, pady=10)
