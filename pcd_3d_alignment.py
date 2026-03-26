@@ -274,13 +274,15 @@ class PointCloudApp:
             messagebox.showerror("Error", "Run registration before viewing aligned point clouds.")
             return
 
-        aligned_source = copy.deepcopy(self.source_sampled)
+        # aligned_source = copy.deepcopy(self.source) 
+        aligned_source = copy.deepcopy(self.source_sampled) 
         aligned_source.transform(self.transformation)
 
         source_file = tempfile.NamedTemporaryFile(delete=False, suffix=".ply")
         target_file = tempfile.NamedTemporaryFile(delete=False, suffix=".ply")
         o3d.io.write_point_cloud(source_file.name, aligned_source)
         o3d.io.write_point_cloud(target_file.name, self.target_sampled)
+        # o3d.io.write_point_cloud(target_file.name, self.target)
 
         source_file.close()
         target_file.close()
