@@ -5,6 +5,10 @@ import numpy as np
 import copy
 from scipy.spatial.transform import Rotation as R
 from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import os
 
 
 class ToolTip:
@@ -40,7 +44,13 @@ class PointCloudApp:
     def __init__(self, root):
         self.root = root
         self.root.title("open3d-aligner-gui")
-        self.root.resizable(False, False)  # Prevent window resizing
+        self.root.geometry("600x800")
+        self.root.resizable(False, False)
+
+        # --- Create main container frame to lock window size ---
+        self.main_frame = tk.Frame(self.root, width=600, height=800)
+        self.main_frame.pack(fill="both", expand=True)
+        self.main_frame.pack_propagate(False)  # Prevent children from resizing root
 
         self.transformation = None
         self.source = None
@@ -49,7 +59,7 @@ class PointCloudApp:
         self.target_sampled = None
 
         # === File I/O Frame ===
-        file_frame = tk.LabelFrame(root, text="Load Point Cloud Files", padx=10, pady=10)
+        file_frame = tk.LabelFrame(self.main_frame, text="Load Point Cloud Files", padx=10, pady=10)
         file_frame.pack(fill="x", padx=10, pady=5)
 
         tk.Button(file_frame, text="Load Source (.asc)", command=self.load_source, width=20)\
@@ -63,7 +73,7 @@ class PointCloudApp:
         self.target_label.grid(row=1, column=1, padx=5, pady=2, sticky="w")
 
         # === Preprocess Frame ===
-        proprocess_frame = tk.LabelFrame(root, text="Preprocess", padx=10, pady=10)
+        proprocess_frame = tk.LabelFrame(self.main_frame, text="Preprocess", padx=10, pady=10)
         proprocess_frame.pack(fill="x", padx=10, pady=5)
 
         # Remove Outliers button
@@ -86,7 +96,7 @@ class PointCloudApp:
         self.sample_btn.grid(row=0, column=3, sticky="w", padx=5, pady=2)
 
         # === Registration Parameters Frame ===
-        param_frame = tk.LabelFrame(root, text="Registration Parameters", padx=10, pady=10)
+        param_frame = tk.LabelFrame(self.main_frame, text="Registration Parameters", padx=10, pady=10)
         param_frame.pack(fill="x", padx=10, pady=5)
 
         voxel_label = tk.Label(param_frame, text="Voxel Size:")
@@ -144,7 +154,7 @@ class PointCloudApp:
         ToolTip(confidence_label, text="Confidence: ...")
 
         # === Registration + Output Frame ===
-        reg_frame = tk.LabelFrame(root, text="Registration Results", padx=10, pady=10)
+        reg_frame = tk.LabelFrame(self.main_frame, text="Registration Results", padx=10, pady=10)
         reg_frame.pack(fill="both", expand=True, padx=10, pady=5)
 
         self.register_btn = tk.Button(reg_frame, text="Register Point Clouds", command=self.register_point_clouds, width=22)
@@ -154,7 +164,7 @@ class PointCloudApp:
         self.output_text.pack(fill="both", expand=True)
 
         # === View Frame ===
-        view_frame = tk.LabelFrame(root, text="Visualization", padx=10, pady=10)
+        view_frame = tk.LabelFrame(self.main_frame, text="Visualization", padx=10, pady=10)
         view_frame.pack(fill="x", padx=10, pady=5)
 
         # Configure grid columns to expand equally (3 columns now)
@@ -214,42 +224,47 @@ class PointCloudApp:
             return False
 
 
+   # --- View Original Point Clouds ---
     def view_point_clouds(self):
         if self.source is None or self.target is None:
             messagebox.showerror("Error", "Load both point clouds first.")
             return
 
-        source_copy = copy.deepcopy(self.source)
-        target_copy = copy.deepcopy(self.target)
+        # --- Save point clouds to temporary files ---
+        source_file = tempfile.NamedTemporaryFile(delete=False, suffix=".ply")
+        target_file = tempfile.NamedTemporaryFile(delete=False, suffix=".ply")
+        o3d.io.write_point_cloud(source_file.name, self.source)
+        o3d.io.write_point_cloud(target_file.name, self.target)
 
-        source_copy.paint_uniform_color([0.8, 0.4, 0.4])
-        target_copy.paint_uniform_color([0.4, 0.8, 0.4]) 
+        source_file.close()
+        target_file.close()
 
-        o3d.visualization.draw_geometries([source_copy, target_copy],
-                                          window_name="Source (Red) & Target (Green)",
-                                          width=1200, height=900)
-        
-    
+        # --- Launch Open3D window in separate process ---
+        subprocess.Popen([sys.executable, "view_clouds_files.py", source_file.name, target_file.name])
+
+
+    # --- View Preprocessed Point Clouds ---
     def view_preprocessed_point_clouds(self):
         if self.source is None or self.target is None:
             messagebox.showerror("Error", "Load both point clouds first.")
             return
-        
+
         if self.source_sampled is None or self.target_sampled is None:
             messagebox.showerror("Error", "Run outlier removal and down sampling before viewing preprocessed point clouds.")
             return
-        
-        source_copy = copy.deepcopy(self.source_sampled)
-        target_copy = copy.deepcopy(self.target_sampled)
 
-        source_copy.paint_uniform_color([1, 0.706, 0])
-        target_copy.paint_uniform_color([0, 0.651, 0.929]) 
+        source_file = tempfile.NamedTemporaryFile(delete=False, suffix=".ply")
+        target_file = tempfile.NamedTemporaryFile(delete=False, suffix=".ply")
+        o3d.io.write_point_cloud(source_file.name, self.source_sampled)
+        o3d.io.write_point_cloud(target_file.name, self.target_sampled)
 
-        o3d.visualization.draw_geometries([source_copy, target_copy],
-                                          window_name="Preprocessed Source (Yellow) & Target (Blue)",
-                                          width=1200, height=900)
-              
-        
+        source_file.close()
+        target_file.close()
+
+        subprocess.Popen([sys.executable, "view_clouds_files.py", source_file.name, target_file.name])
+
+
+    # --- View Aligned Point Clouds ---
     def view_aligned_point_clouds(self):
         if self.source is None or self.target is None:
             messagebox.showerror("Error", "Load both point clouds first.")
@@ -259,19 +274,19 @@ class PointCloudApp:
             messagebox.showerror("Error", "Run registration before viewing aligned point clouds.")
             return
 
-        # aligned_source = copy.deepcopy(self.source)
         aligned_source = copy.deepcopy(self.source_sampled)
         aligned_source.transform(self.transformation)
 
-        aligned_source.paint_uniform_color([1, 0.706, 0])
-        # target_copy = copy.deepcopy(self.target)
-        target_copy = copy.deepcopy(self.target_sampled)
-        target_copy.paint_uniform_color([0, 0.651, 0.929]) 
+        source_file = tempfile.NamedTemporaryFile(delete=False, suffix=".ply")
+        target_file = tempfile.NamedTemporaryFile(delete=False, suffix=".ply")
+        o3d.io.write_point_cloud(source_file.name, aligned_source)
+        o3d.io.write_point_cloud(target_file.name, self.target_sampled)
 
-        o3d.visualization.draw_geometries([aligned_source, target_copy],
-                                          window_name="Aligned Source (Yellow) & Target (Blue)",
-                                          width=1200, height=900)
-        
+        source_file.close()
+        target_file.close()
+
+        subprocess.Popen([sys.executable, "view_clouds_files.py", source_file.name, target_file.name])
+            
 
     def register_point_clouds(self):
         if self.source is None or self.target is None:
@@ -489,9 +504,26 @@ class PointCloudApp:
 
 
 if __name__ == "__main__":
+
     root = tk.Tk()
+    root.title("open3d-aligner-gui")
+
+    # Disable automatic DPI scaling
+    root.tk.call("tk", "scaling", 1.0)
+
+    # Set initial size
     root.geometry("600x800")  
+
+    # Disable resizing
     root.resizable(False, False)
+
+    # Lock min/max size
+    root.update_idletasks()  # Let Tk calculate widget sizes
+    root.minsize(600, 800)
+    root.maxsize(600, 800)
+
+    # --- Initialize the app ---
     app = PointCloudApp(root)
+
     root.mainloop()
 
