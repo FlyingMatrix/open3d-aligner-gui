@@ -411,9 +411,9 @@ class PointCloudApp:
         self.source_pcd_cleaned = process(self.source)
         self.target_pcd_cleaned = process(self.target)
 
-        print("> Number of source: " + str(len(self.source.points)) +
+        print("> Number of source point cloud before outlier removal: " + str(len(self.source.points)) +
             ", after outlier removal: " + str(len(self.source_pcd_cleaned.points)))
-        print("> Number of target: " + str(len(self.target.points)) +
+        print("> Number of target point cloud before outlier removal: " + str(len(self.target.points)) +
                 ", after outlier removal: " + str(len(self.target_pcd_cleaned.points)))
 
         return self.source_pcd_cleaned, self.target_pcd_cleaned
@@ -467,10 +467,10 @@ class PointCloudApp:
         self.source_sampled = PointCloudApp.downsample_point_cloud(self.source_pcd_cleaned, self.down_sample_rate)
         self.target_sampled = PointCloudApp.downsample_point_cloud(self.target_pcd_cleaned, self.down_sample_rate)
 
-        print("> Number of source: " + str(np.asarray(self.source_pcd_cleaned.points).shape[0]) + 
-              ", after down sample: " + str(np.asarray(self.source_sampled.points).shape[0]))
-        print("> Number of target: " + str(np.asarray(self.target_pcd_cleaned.points).shape[0]) + 
-              ", after down sample: " + str(np.asarray(self.target_sampled.points).shape[0]))
+        print("> Number of source point cloud before downsampling: " + str(np.asarray(self.source_pcd_cleaned.points).shape[0]) + 
+              ", after downsampling: " + str(np.asarray(self.source_sampled.points).shape[0]))
+        print("> Number of target point cloud before downsampling: " + str(np.asarray(self.target_pcd_cleaned.points).shape[0]) + 
+              ", after downsampling: " + str(np.asarray(self.target_sampled.points).shape[0]))
 
 
     @staticmethod
