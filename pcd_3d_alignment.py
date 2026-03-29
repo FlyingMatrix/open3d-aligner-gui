@@ -121,7 +121,7 @@ class PointCloudApp:
         max_nn_label.grid(row=1, column=0, sticky="e", padx=5, pady=2)
         vcmd = (root.register(self.validate_non_negative_integer), "%P")
         self.max_nn_entry = tk.Entry(param_frame, width=10, justify="right", validate="key", validatecommand=vcmd)
-        self.max_nn_entry.insert(0, "20")  # Default value
+        self.max_nn_entry.insert(0, "40")  # Default value
         self.max_nn_entry.grid(row=1, column=1, sticky="w", padx=5, pady=2)
         tk.Label(param_frame, text="").grid(row=0, column=2, sticky="w", padx=5, pady=2)
         ToolTip(max_nn_label, text="Max_NN: ...")
@@ -148,7 +148,7 @@ class PointCloudApp:
         confidence_label.grid(row=2, column=3, sticky="e", padx=5, pady=2)
         vcmd = (root.register(self.validate_float_0_to_1), "%P")
         self.confidence_entry = tk.Entry(param_frame, width=10, justify="right", validate="key", validatecommand=vcmd)
-        self.confidence_entry.insert(0, "0.9999") # Default value
+        self.confidence_entry.insert(0, "0.99999") # Default value
         self.confidence_entry.grid(row=2, column=4, sticky="w", padx=5, pady=2)
         tk.Label(param_frame, text="").grid(row=2, column=5, sticky="w", padx=5, pady=2)
         ToolTip(confidence_label, text="Confidence: ...")
@@ -172,13 +172,13 @@ class PointCloudApp:
         view_frame.grid_columnconfigure(1, weight=1)
         view_frame.grid_columnconfigure(2, weight=1)
 
-        btn_orig = tk.Button(view_frame, text="View Original Point Clouds", command=self.view_point_clouds, width=24)
+        btn_orig = tk.Button(view_frame, text="View Original Point Clouds", command=self.view_point_clouds, width=28)
         btn_orig.grid(row=0, column=0, padx=5, pady=0)
 
-        btn_preprocessed = tk.Button(view_frame, text="View Preprocessed Point Clouds", command=self.view_preprocessed_point_clouds, width=24)
+        btn_preprocessed = tk.Button(view_frame, text="View Preprocessed Point Clouds", command=self.view_preprocessed_point_clouds, width=28)
         btn_preprocessed.grid(row=0, column=1, padx=5, pady=0)
 
-        btn_aligned = tk.Button(view_frame, text="View Aligned Point Clouds", command=self.view_aligned_point_clouds, width=24)
+        btn_aligned = tk.Button(view_frame, text="View Aligned Point Clouds", command=self.view_aligned_point_clouds, width=28)
         btn_aligned.grid(row=0, column=2, padx=5, pady=0)
         
 
@@ -345,7 +345,11 @@ class PointCloudApp:
         o3d.pipelines.registration.TransformationEstimationPointToPlane())
 
         # Output the transformation matrix
-        self.output_text.delete('1.0', tk.END)
+        # self.output_text.delete('1.0', tk.END)
+        self.output_text.insert(tk.END, "\n")
+        self.output_text.insert(tk.END, "=============== Point Cloud Registration ===============")
+        self.output_text.insert(tk.END, "\n")
+        self.output_text.insert(tk.END, "\n")
         self.output_text.insert(tk.END, "Transformation Matrix (ICP refined):\n")
         self.output_text.insert(tk.END, str(result_icp.transformation))
         self.transformation = result_icp.transformation
@@ -385,6 +389,7 @@ class PointCloudApp:
         self.output_text.insert(tk.END, "\n")
         self.output_text.insert(tk.END, "RMSE (Root Mean Square Error):\n")
         self.output_text.insert(tk.END, str(self.rmse))
+        self.output_text.insert(tk.END, "\n")
 
 
     def remove_outliers(self,
@@ -411,10 +416,17 @@ class PointCloudApp:
         self.source_pcd_cleaned = process(self.source)
         self.target_pcd_cleaned = process(self.target)
 
-        print("> Number of source point cloud before outlier removal: " + str(len(self.source.points)) +
-            ", after outlier removal: " + str(len(self.source_pcd_cleaned.points)))
-        print("> Number of target point cloud before outlier removal: " + str(len(self.target.points)) +
-                ", after outlier removal: " + str(len(self.target_pcd_cleaned.points)))
+        self.output_text.insert(tk.END, "\n")
+        self.output_text.insert(tk.END, "=============== Outlier Removal ===============")
+        self.output_text.insert(tk.END, "\n")
+        self.output_text.insert(tk.END, "\n")
+        self.output_text.insert(tk.END, "> Number of source point cloud before outlier removal: " + str(len(self.source.points)) + "\n")
+        self.output_text.insert(tk.END, "> Number of source point cloud after outlier removal: " + str(len(self.source_pcd_cleaned.points)))
+        self.output_text.insert(tk.END, "\n")
+        self.output_text.insert(tk.END, "\n")
+        self.output_text.insert(tk.END, "> Number of target point cloud before outlier removal: " + str(len(self.target.points)) + "\n")
+        self.output_text.insert(tk.END, "> Number of target point cloud after outlier removal: " + str(len(self.target_pcd_cleaned.points)))
+        self.output_text.insert(tk.END, "\n")
 
         return self.source_pcd_cleaned, self.target_pcd_cleaned
         
@@ -466,12 +478,18 @@ class PointCloudApp:
 
         self.source_sampled = PointCloudApp.downsample_point_cloud(self.source_pcd_cleaned, self.down_sample_rate)
         self.target_sampled = PointCloudApp.downsample_point_cloud(self.target_pcd_cleaned, self.down_sample_rate)
-
-        print("> Number of source point cloud before downsampling: " + str(np.asarray(self.source_pcd_cleaned.points).shape[0]) + 
-              ", after downsampling: " + str(np.asarray(self.source_sampled.points).shape[0]))
-        print("> Number of target point cloud before downsampling: " + str(np.asarray(self.target_pcd_cleaned.points).shape[0]) + 
-              ", after downsampling: " + str(np.asarray(self.target_sampled.points).shape[0]))
-
+        
+        self.output_text.insert(tk.END, "\n")
+        self.output_text.insert(tk.END, "=============== Down-Sampling ===============")
+        self.output_text.insert(tk.END, "\n")
+        self.output_text.insert(tk.END, "\n")
+        self.output_text.insert(tk.END, "> Number of source point cloud before downsampling: " + str(np.asarray(self.source_pcd_cleaned.points).shape[0]) + "\n")
+        self.output_text.insert(tk.END, "> Number of source point cloud after downsampling: " + str(np.asarray(self.source_sampled.points).shape[0]))
+        self.output_text.insert(tk.END, "\n")
+        self.output_text.insert(tk.END, "\n")
+        self.output_text.insert(tk.END, "> Number of target point cloud before downsampling: " + str(np.asarray(self.target_pcd_cleaned.points).shape[0]) + "\n")
+        self.output_text.insert(tk.END, "> Number of target point cloud after downsampling: " + str(np.asarray(self.target_sampled.points).shape[0]))
+        self.output_text.insert(tk.END, "\n")
 
     @staticmethod
     def transformation_to_euler(transformation_matrix):
